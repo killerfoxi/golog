@@ -190,7 +190,7 @@ func (self *defaultLogger) Debug(a ...interface{}) {
   self.output(SeverityDebug, newLogMsg(a))
 }
 
-var DefLogger Logger = &defaultLogger{
+var Current = &defaultLogger{
   severity: SeverityInfo,
   out: os.Stderr,
   formatter: FormatSequencer(FormatSeq{
@@ -206,6 +206,42 @@ var DefLogger Logger = &defaultLogger{
     FmtMsg()}),
   }
 
-func Fatal(data... interface{}) {
-  DefLogger.Fatal(data...)
+func Fatalf(format string, a ...interface{}) {
+  Current.output(SeverityFatal, newLogMsgFormatted(format, a))
+}
+
+func Fatal(a ...interface{}) {
+  Current.output(SeverityFatal, newLogMsg(a))
+}
+
+func Errorf(format string, a ...interface{}) {
+  Current.output(SeverityError, newLogMsgFormatted(format, a))
+}
+
+func Error(a ...interface{}) {
+  Current.output(SeverityError, newLogMsg(a))
+}
+
+func Warningf(format string, a ...interface{}) {
+  Current.output(SeverityWarning, newLogMsgFormatted(format, a))
+}
+
+func Warning(a ...interface{}) {
+  Current.output(SeverityWarning, newLogMsg(a))
+}
+
+func Infof(format string, a ...interface{}) {
+  Current.output(SeverityInfo, newLogMsgFormatted(format, a))
+}
+
+func Info(a ...interface{}) {
+  Current.output(SeverityInfo, newLogMsg(a))
+}
+
+func Debugf(format string, a ...interface{}) {
+  Current.output(SeverityDebug, newLogMsgFormatted(format, a))
+}
+
+func Debug(a ...interface{}) {
+  Current.output(SeverityDebug, newLogMsg(a))
 }

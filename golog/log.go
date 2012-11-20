@@ -96,6 +96,31 @@ func (self *runtimeContext) Fn() string {
   return self.fn
 }
 
+type logMsg struct {
+  args []interface{}
+}
+
+func newLogMsg(args []interface{}) *logMsg {
+  return &logMsg{args: args}
+}
+
+func (self *logMsg) String() string {
+  return fmt.Sprint(self.args...)
+}
+
+type logMsgFormatted struct {
+  format string
+  args []interface{}
+}
+
+func newLogMsgFormatted(format string, args []interface{}) *logMsgFormatted {
+  return &logMsgFormatted{format: format, args: args}
+}
+
+func (self *logMsgFormatted) String() string {
+  return fmt.Sprintf(self.format, self.args...)
+}
+
 type defaultLogger struct {
   severity Severity
   formatter Formatter
@@ -110,12 +135,12 @@ func (self *defaultLogger) GetSeverity() Severity {
   return self.severity
 }
 
-func (self *defaultLogger) output(s Severity, msg string) {
+func (self *defaultLogger) output(s Severity, msg fmt.Stringer) {
   if s > self.severity {
     return
   }
 
-  ctx := newRuntimeContext(s, msg)
+  ctx := newRuntimeContext(s, msg.String())
   final := bytes.NewBufferString(self.formatter.Format(ctx))
   if !bytes.HasSuffix(final.Bytes(), []byte("\n")) {
     final.WriteString("\n")
@@ -124,43 +149,43 @@ func (self *defaultLogger) output(s Severity, msg string) {
 }
 
 func (self *defaultLogger) Fatalf(format string, a ...interface{}) {
-  self.output(SeverityFatal, fmt.Sprintf(format, a...))
+  self.output(SeverityFatal, newLogMsgFormatted(format, a))
 }
 
 func (self *defaultLogger) Fatal(a ...interface{}) {
-  self.output(SeverityFatal, fmt.Sprint(a...))
+  self.output(SeverityFatal, newLogMsg(a))
 }
 
 func (self *defaultLogger) Errorf(format string, a ...interface{}) {
-  self.output(SeverityError, fmt.Sprintf(format, a...))
+  self.output(SeverityError, newLogMsgFormatted(format, a))
 }
 
 func (self *defaultLogger) Error(a ...interface{}) {
-  self.output(SeverityError, fmt.Sprint(a...))
+  self.output(SeverityError, newLogMsg(a))
 }
 
 func (self *defaultLogger) Warningf(format string, a ...interface{}) {
-  self.output(SeverityWarning, fmt.Sprintf(format, a...))
+  self.output(SeverityWarning, newLogMsgFormatted(format, a))
 }
 
 func (self *defaultLogger) Warning(a ...interface{}) {
-  self.output(SeverityWarning, fmt.Sprint(a...))
+  self.output(SeverityWarning, newLogMsg(a))
 }
 
 func (self *defaultLogger) Infof(format string, a ...interface{}) {
-  self.output(SeverityInfo, fmt.Sprintf(format, a...))
+  self.output(SeverityInfo, newLogMsgFormatted(format, a))
 }
 
 func (self *defaultLogger) Info(a ...interface{}) {
-  self.output(SeverityInfo, fmt.Sprint(a...))
+  self.output(SeverityInfo, newLogMsg(a))
 }
 
 func (self *defaultLogger) Debugf(format string, a ...interface{}) {
-  self.output(SeverityDebug, fmt.Sprintf(format, a...))
+  self.output(SeverityDebug, newLogMsgFormatted(format, a))
 }
 
 func (self *defaultLogger) Debug(a ...interface{}) {
-  self.output(SeverityDebug, fmt.Sprint(a...))
+  self.output(SeverityDebug, newLogMsg(a))
 }
 
 var DefLogger Logger = &defaultLogger{

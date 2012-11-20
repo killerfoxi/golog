@@ -5,6 +5,7 @@ import (
   "io"
   "os"
   "runtime"
+  "bytes"
 )
 
 type Severity uint8
@@ -115,7 +116,11 @@ func (self *defaultLogger) output(s Severity, msg string) {
   }
 
   ctx := newRuntimeContext(s, msg)
-  self.out.Write([]byte(self.formatter.Format(ctx)))
+  final := bytes.NewBufferString(self.formatter.Format(ctx))
+  if !bytes.HasSuffix(final.Bytes(), []byte("\n")) {
+    final.WriteString("\n")
+  }
+  self.out.Write(final.Bytes())
 }
 
 func (self *defaultLogger) Fatalf(format string, a ...interface{}) {
@@ -163,7 +168,7 @@ var DefLogger Logger = &defaultLogger{
   out: os.Stderr,
   formatter: FormatSequencer(FormatSeq{
     FmtLevel(false),
-    FmtDate("2006-01-02 15:04:05"),
+    FmtDate("2006-01-02 15:04:05.999999"),
     FmtString(" "),
     FmtFile(false),
     FmtString("#"),
@@ -171,8 +176,7 @@ var DefLogger Logger = &defaultLogger{
     FmtString(":"),
     FmtLine(),
     FmtString(": "),
-    FmtMsg(),
-    FmtString("\n")}),
+    FmtMsg()}),
   }
 
 func Fatal(data... interface{}) {

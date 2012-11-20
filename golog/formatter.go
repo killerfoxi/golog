@@ -4,6 +4,7 @@ import (
   "fmt"
   "time"
   "path"
+  "bytes"
 )
 
 type FormatContext interface {
@@ -114,10 +115,10 @@ func FormatSequencer(format_seq FormatSeq) *formatSequencer {
 }
 
 func (self *formatSequencer) Format(ctx FormatContext) string {
-  var formatted string
+  var formatted bytes.Buffer
 
   for _, f := range self.format_seq {
-    formatted = fmt.Sprintf("%s%s", formatted, f.Format(ctx))
+    formatted.WriteString(f.Format(ctx))
   }
-  return formatted
+  return formatted.String()
 }

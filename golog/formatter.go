@@ -12,6 +12,7 @@ type FormatContext interface {
   FileLine() (string, int)
   Fn() string
   Msg() string
+  CallerTime() time.Time
 }
 
 type Formatter interface {
@@ -41,8 +42,8 @@ func FmtDate(datefmt string) fmtDate {
   return fmtDate{datefmt}
 }
 
-func (self fmtDate) Format(_ FormatContext) string {
-  return time.Now().Format(self.datefmt)
+func (self fmtDate) Format(ctx FormatContext) string {
+  return ctx.CallerTime().Format(self.datefmt)
 }
 
 type fmtFile struct {

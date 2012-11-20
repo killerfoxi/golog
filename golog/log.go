@@ -6,6 +6,7 @@ import (
   "os"
   "runtime"
   "bytes"
+  "time"
 )
 
 type Severity uint8
@@ -58,10 +59,12 @@ type runtimeContext struct {
   file string
   line int
   fn string
+  caller_time time.Time
 }
 
-func newRuntimeContext(s Severity, msg string) *runtimeContext {
-  ctx := &runtimeContext{severity: s, msg: msg, file: "???", fn: "???"}
+func newRuntimeContext(s Severity, msg string, caller_time time.Time) *runtimeContext {
+  ctx := &runtimeContext{severity: s, msg: msg, file: "???", fn: "???",
+                         caller_time: caller_time}
   ctx.load()
   return ctx
 }
@@ -96,6 +99,10 @@ func (self *runtimeContext) Fn() string {
     self.load()
   }
   return self.fn
+}
+
+func (self *runtimeContext) CallerTime() time.Time {
+  return self.caller_time
 }
 
 type logMsg struct {
@@ -142,7 +149,7 @@ func (self *defaultLogger) output(s Severity, msg fmt.Stringer) {
     return
   }
 
-  ctx := newRuntimeContext(s, msg.String())
+  ctx := newRuntimeContext(s, msg.String(), time.Now())
   final := bytes.NewBufferString(self.formatter.Format(ctx))
   if !bytes.HasSuffix(final.Bytes(), []byte("\n")) {
     final.WriteString("\n")

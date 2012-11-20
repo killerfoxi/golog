@@ -61,7 +61,9 @@ type runtimeContext struct {
 }
 
 func newRuntimeContext(s Severity, msg string) *runtimeContext {
-  return &runtimeContext{severity: s, msg: msg, file: "???", fn: "???"}
+  ctx := &runtimeContext{severity: s, msg: msg, file: "???", fn: "???"}
+  ctx.load()
+  return ctx
 }
 
 func (self *runtimeContext) Severity() Severity {

@@ -64,7 +64,7 @@ type runtimeContext struct {
 
 func newRuntimeContext(s Severity, msg string, caller_time time.Time) *runtimeContext {
   ctx := &runtimeContext{severity: s, msg: msg, file: "???", fn: "???",
-                         caller_time: caller_time}
+                         caller_time: caller_time, skip: 7}
   ctx.load()
   return ctx
 }
@@ -78,7 +78,7 @@ func (self *runtimeContext) Msg() string {
 }
 
 func (self *runtimeContext) load() {
-  if pc, file, line, ok := runtime.Caller(7); ok {
+  if pc, file, line, ok := runtime.Caller(self.skip); ok {
     self.file = file
     self.line = line
     if fn := runtime.FuncForPC(pc); fn != nil {

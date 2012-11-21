@@ -7,6 +7,7 @@ import (
   "runtime"
   "bytes"
   "time"
+  "sync"
 )
 
 type Severity uint8
@@ -127,6 +128,7 @@ type defaultLogger struct {
   severity Severity
   formatter Formatter
   out io.Writer
+  mu sync.Mutex
 }
 
 func (self *defaultLogger) SetSeverity(s Severity) {
@@ -141,6 +143,9 @@ func (self *defaultLogger) output(s Severity, msg fmt.Stringer) {
   if s > self.severity {
     return
   }
+
+  self.mu.Lock()
+  defer self.mu.Unlock()
 
   ctx := newRuntimeContext(s, msg.String(), time.Now())
   final := bytes.NewBufferString(self.formatter.Format(ctx))

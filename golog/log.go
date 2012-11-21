@@ -55,7 +55,6 @@ type runtimeContext struct {
   msg string
   skip int
 
-  loaded bool
   file string
   line int
   fn string
@@ -64,7 +63,7 @@ type runtimeContext struct {
 
 func newRuntimeContext(s Severity, msg string, caller_time time.Time) *runtimeContext {
   ctx := &runtimeContext{severity: s, msg: msg, file: "???", fn: "???",
-                         caller_time: caller_time, skip: 7}
+                         caller_time: caller_time, skip: 4}
   ctx.load()
   return ctx
 }
@@ -88,16 +87,10 @@ func (self *runtimeContext) load() {
 }
 
 func (self *runtimeContext) FileLine() (string, int) {
-  if !self.loaded {
-    self.load()
-  }
   return self.file, self.line
 }
 
 func (self *runtimeContext) Fn() string {
-  if !self.loaded {
-    self.load()
-  }
   return self.fn
 }
 

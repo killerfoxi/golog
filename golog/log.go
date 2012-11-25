@@ -131,6 +131,10 @@ type defaultLogger struct {
   mu sync.Mutex
 }
 
+func NewLogger(s Severity, f Formatter, out io.Writer) *defaultLogger {
+  return &defaultLogger{severity: s, formatter: f, out: out}
+}
+
 func (self *defaultLogger) SetSeverity(s Severity) {
   self.severity = s
 }
@@ -195,21 +199,19 @@ func (self *defaultLogger) Debug(a ...interface{}) {
   self.output(SeverityDebug, newLogMsg(a))
 }
 
-var Current = &defaultLogger{
-  severity: SeverityInfo,
-  out: os.Stderr,
-  formatter: FormatSequencer(FormatSeq{
-    FmtLevel(false),
-    FmtDate("2006-01-02 15:04:05.999999"),
-    FmtString(" "),
-    FmtFile(false),
-    FmtString("#"),
-    FmtFunc(),
-    FmtString(":"),
-    FmtLine(),
-    FmtString(": "),
-    FmtMsg()}),
-  }
+var Current = NewLogger(SeverityInfo,
+                        FormatSequencer(FormatSeq{
+                          FmtLevel(false),
+                          FmtDate("2006-01-02 15:04:05.999999"),
+                          FmtString(" "),
+                          FmtFile(false),
+                          FmtString("#"),
+                          FmtFunc(),
+                          FmtString(":"),
+                          FmtLine(),
+                          FmtString(": "),
+                          FmtMsg()}),
+                        os.Stderr)
 
 func Fatalf(format string, a ...interface{}) {
   Current.output(SeverityFatal, newLogMsgFormatted(format, a))

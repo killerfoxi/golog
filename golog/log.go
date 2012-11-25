@@ -46,6 +46,10 @@ type Logger interface {
   Infof(string, ...interface{})
   Debug(...interface{})
   Debugf(string, ...interface{})
+}
+
+type LogWritter interface {
+  Output(Severity, fmt.Stringer)
 
   SetSeverity(Severity)
   GetSeverity() Severity
@@ -143,7 +147,7 @@ func (self *defaultLogger) GetSeverity() Severity {
   return self.severity
 }
 
-func (self *defaultLogger) output(s Severity, msg fmt.Stringer) {
+func (self *defaultLogger) Output(s Severity, msg fmt.Stringer) {
   if s > self.severity {
     return
   }
@@ -160,95 +164,95 @@ func (self *defaultLogger) output(s Severity, msg fmt.Stringer) {
 }
 
 func (self *defaultLogger) Fatalf(format string, a ...interface{}) {
-  self.output(SeverityFatal, newLogMsgFormatted(format, a))
+  self.Output(SeverityFatal, newLogMsgFormatted(format, a))
 }
 
 func (self *defaultLogger) Fatal(a ...interface{}) {
-  self.output(SeverityFatal, newLogMsg(a))
+  self.Output(SeverityFatal, newLogMsg(a))
 }
 
 func (self *defaultLogger) Errorf(format string, a ...interface{}) {
-  self.output(SeverityError, newLogMsgFormatted(format, a))
+  self.Output(SeverityError, newLogMsgFormatted(format, a))
 }
 
 func (self *defaultLogger) Error(a ...interface{}) {
-  self.output(SeverityError, newLogMsg(a))
+  self.Output(SeverityError, newLogMsg(a))
 }
 
 func (self *defaultLogger) Warningf(format string, a ...interface{}) {
-  self.output(SeverityWarning, newLogMsgFormatted(format, a))
+  self.Output(SeverityWarning, newLogMsgFormatted(format, a))
 }
 
 func (self *defaultLogger) Warning(a ...interface{}) {
-  self.output(SeverityWarning, newLogMsg(a))
+  self.Output(SeverityWarning, newLogMsg(a))
 }
 
 func (self *defaultLogger) Infof(format string, a ...interface{}) {
-  self.output(SeverityInfo, newLogMsgFormatted(format, a))
+  self.Output(SeverityInfo, newLogMsgFormatted(format, a))
 }
 
 func (self *defaultLogger) Info(a ...interface{}) {
-  self.output(SeverityInfo, newLogMsg(a))
+  self.Output(SeverityInfo, newLogMsg(a))
 }
 
 func (self *defaultLogger) Debugf(format string, a ...interface{}) {
-  self.output(SeverityDebug, newLogMsgFormatted(format, a))
+  self.Output(SeverityDebug, newLogMsgFormatted(format, a))
 }
 
 func (self *defaultLogger) Debug(a ...interface{}) {
-  self.output(SeverityDebug, newLogMsg(a))
+  self.Output(SeverityDebug, newLogMsg(a))
 }
 
-var Current = NewLogger(SeverityInfo,
-                        FormatSequencer(FormatSeq{
-                          FmtLevel(false),
-                          FmtDate("2006-01-02 15:04:05.999999"),
-                          FmtString(" "),
-                          FmtFile(false),
-                          FmtString("#"),
-                          FmtFunc(),
-                          FmtString(":"),
-                          FmtLine(),
-                          FmtString(": "),
-                          FmtMsg()}),
-                        os.Stderr)
+var Current LogWritter = NewLogger(SeverityInfo,
+                                   FormatSequencer(FormatSeq{
+                                     FmtLevel(false),
+                                     FmtDate("2006-01-02 15:04:05.999999"),
+                                     FmtString(" "),
+                                     FmtFile(false),
+                                     FmtString("#"),
+                                     FmtFunc(),
+                                     FmtString(":"),
+                                     FmtLine(),
+                                     FmtString(": "),
+                                     FmtMsg()}),
+                                   os.Stderr)
 
 func Fatalf(format string, a ...interface{}) {
-  Current.output(SeverityFatal, newLogMsgFormatted(format, a))
+  Current.Output(SeverityFatal, newLogMsgFormatted(format, a))
 }
 
 func Fatal(a ...interface{}) {
-  Current.output(SeverityFatal, newLogMsg(a))
+  Current.Output(SeverityFatal, newLogMsg(a))
 }
 
 func Errorf(format string, a ...interface{}) {
-  Current.output(SeverityError, newLogMsgFormatted(format, a))
+  Current.Output(SeverityError, newLogMsgFormatted(format, a))
 }
 
 func Error(a ...interface{}) {
-  Current.output(SeverityError, newLogMsg(a))
+  Current.Output(SeverityError, newLogMsg(a))
 }
 
 func Warningf(format string, a ...interface{}) {
-  Current.output(SeverityWarning, newLogMsgFormatted(format, a))
+  Current.Output(SeverityWarning, newLogMsgFormatted(format, a))
 }
 
 func Warning(a ...interface{}) {
-  Current.output(SeverityWarning, newLogMsg(a))
+  Current.Output(SeverityWarning, newLogMsg(a))
 }
 
 func Infof(format string, a ...interface{}) {
-  Current.output(SeverityInfo, newLogMsgFormatted(format, a))
+  Current.Output(SeverityInfo, newLogMsgFormatted(format, a))
 }
 
 func Info(a ...interface{}) {
-  Current.output(SeverityInfo, newLogMsg(a))
+  Current.Output(SeverityInfo, newLogMsg(a))
 }
 
 func Debugf(format string, a ...interface{}) {
-  Current.output(SeverityDebug, newLogMsgFormatted(format, a))
+  Current.Output(SeverityDebug, newLogMsgFormatted(format, a))
 }
 
 func Debug(a ...interface{}) {
-  Current.output(SeverityDebug, newLogMsg(a))
+  Current.Output(SeverityDebug, newLogMsg(a))
 }

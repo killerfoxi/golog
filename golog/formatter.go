@@ -2,18 +2,9 @@ package golog
 
 import (
   "fmt"
-  "time"
   "path"
   "bytes"
 )
-
-type FormatContext interface {
-  Severity() Severity
-  FileLine() (string, int)
-  Fn() string
-  Msg() string
-  CallerTime() time.Time
-}
 
 type Formatter interface {
   Format(FormatContext) string

@@ -7,7 +7,7 @@ import (
 )
 
 type Formatter interface {
-  Format(FormatContext) string
+  Format(LogContext) string
 }
 
 type fmtLevel struct {
@@ -18,7 +18,7 @@ func FmtLevel(long bool) fmtLevel {
   return fmtLevel{long}
 }
 
-func (self fmtLevel) Format(ctx FormatContext) string {
+func (self fmtLevel) Format(ctx LogContext) string {
   if self.long {
     return ctx.Severity().String()
   }
@@ -33,7 +33,7 @@ func FmtDate(datefmt string) fmtDate {
   return fmtDate{datefmt}
 }
 
-func (self fmtDate) Format(ctx FormatContext) string {
+func (self fmtDate) Format(ctx LogContext) string {
   return ctx.CallerTime().Format(self.datefmt)
 }
 
@@ -45,7 +45,7 @@ func FmtFile(long bool) fmtFile {
   return fmtFile{long}
 }
 
-func (self fmtFile) Format(ctx FormatContext) string {
+func (self fmtFile) Format(ctx LogContext) string {
   file, _ := ctx.FileLine()
   if self.long {
     return file
@@ -59,7 +59,7 @@ func FmtLine() fmtLine {
   return fmtLine{}
 }
 
-func (self fmtLine) Format(ctx FormatContext) string {
+func (self fmtLine) Format(ctx LogContext) string {
   _, line := ctx.FileLine()
   return fmt.Sprint(line)
 }
@@ -70,7 +70,7 @@ func FmtFunc() fmtFunc {
   return fmtFunc{}
 }
 
-func (self fmtFunc) Format(ctx FormatContext) string {
+func (self fmtFunc) Format(ctx LogContext) string {
   return fmt.Sprintf("%s()", ctx.Fn())
 }
 
@@ -80,7 +80,7 @@ func FmtMsg() fmtMsg {
   return fmtMsg{}
 }
 
-func (self fmtMsg) Format(ctx FormatContext) string {
+func (self fmtMsg) Format(ctx LogContext) string {
   return ctx.Msg()
 }
 
@@ -92,7 +92,7 @@ func FmtString(data string) fmtString {
   return fmtString{data}
 }
 
-func (self fmtString) Format(_ FormatContext) string {
+func (self fmtString) Format(_ LogContext) string {
   return self.data
 }
 
@@ -106,7 +106,7 @@ func FormatSequencer(format_seq FormatSeq) *formatSequencer {
   return &formatSequencer{format_seq: format_seq}
 }
 
-func (self *formatSequencer) Format(ctx FormatContext) string {
+func (self *formatSequencer) Format(ctx LogContext) string {
   var formatted bytes.Buffer
 
   for _, f := range self.format_seq {

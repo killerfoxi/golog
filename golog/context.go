@@ -5,7 +5,7 @@ import (
   "runtime"
 )
 
-type FormatContext interface {
+type LogContext interface {
   Severity() Severity
   FileLine() (string, int)
   Fn() string

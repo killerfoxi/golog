@@ -16,7 +16,7 @@ const (
   severityMax
 )
 
-var Severities = [severityMax]string{"Fatal", "Error", "Warning", "Info", "Debug"}
+var Severities = [severityMax]string{"FATAL", "ERROR", "WARNING", "INFO", "DEBUG"}
 
 func (self Severity) String() string {
   if self > severityMax - 1 {

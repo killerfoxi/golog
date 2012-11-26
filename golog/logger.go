@@ -3,6 +3,7 @@ package golog
 import (
   "fmt"
   "os"
+  "runtime"
 )
 
 type Severity uint8
@@ -28,6 +29,23 @@ func (self Severity) String() string {
 
 func (self Severity) Single() string {
   return string([]rune(self.String())[0])
+}
+
+// Helper function to extract the stack
+func stack(all bool) []byte {
+  var buf = make([]byte, 1024)
+  var size int
+
+  for {
+    size = runtime.Stack(buf, all)
+
+    if size < cap(buf) {
+      break
+    } else {
+      buf = make([]byte, cap(buf) * 2)
+    }
+  }
+  return buf
 }
 
 type Logger interface {

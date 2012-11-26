@@ -6,6 +6,7 @@ import (
   "bytes"
   "time"
   "sync"
+  "os"
 )
 
 type defaultLogger struct {
@@ -41,6 +42,11 @@ func (self *defaultLogger) Output(s Severity, msg fmt.Stringer) {
     final.WriteString("\n")
   }
   self.out.Write(final.Bytes())
+
+  if s == SeverityFatal {
+    self.out.Write(stack(false))
+    os.Exit(2)
+  }
 }
 
 func (self *defaultLogger) Fatalf(format string, a ...interface{}) {

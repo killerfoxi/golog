@@ -57,7 +57,7 @@ var hostname = "???"
 var username = "???"
 var pid = os.Getpid()
 
-func init() {
+func multiplexerInit() {
   if hn, err := os.Hostname(); err == nil {
     hostname = strings.SplitN(hn, ".", 2)[0]
   }

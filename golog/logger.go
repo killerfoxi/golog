@@ -4,6 +4,10 @@ import (
   "fmt"
   "os"
   "runtime"
+  "flag"
+  "errors"
+  "strings"
+  "io"
 )
 
 type Severity uint8
@@ -29,6 +33,18 @@ func (self Severity) String() string {
 
 func (self Severity) Single() string {
   return string([]rune(self.String())[0])
+}
+
+func (self *Severity) Set(val string) error {
+  var x = strings.ToUpper(val)
+
+  for i := SeverityFatal; i <= severityMax; i++ {
+    if i.String() == x || fmt.Sprintf("%d", i) == x {
+      *self = i
+      return nil
+    }
+  }
+  return errors.New("Unable to parse severity")
 }
 
 // Helper function to extract the stack
@@ -93,19 +109,47 @@ func (self *logMsgFormatted) String() string {
   return fmt.Sprintf(self.format, self.args...)
 }
 
-var Current LogWritter = NewLogger(SeverityInfo,
-                                   FormatSequencer(FormatSeq{
-                                     FmtLevel(false),
-                                     FmtDate("2006-01-02 15:04:05.999999"),
-                                     FmtString(" "),
-                                     FmtFile(false),
-                                     FmtString("#"),
-                                     FmtFunc(),
-                                     FmtString(":"),
-                                     FmtLine(),
-                                     FmtString(": "),
-                                     FmtMsg()}),
-                                   os.Stderr)
+var Current LogWritter = nil
+
+func init() {
+  var logtostderr, logalsotostderr bool
+  var logdir string
+  var logthreshold = SeverityInfo
+
+  var output io.Writer
+
+  fs := flag.NewFlagSet("golog", flag.ContinueOnError)
+  fs.BoolVar(&logtostderr, "logtostderr", true, "Log to stderr")
+  fs.BoolVar(&logalsotostderr, "logalsotostderr", true, "Log also to stderr")
+  fs.Var(&logthreshold, "logthreshold", "The log threshold")
+  fs.StringVar(&logdir, "logdir", ".", "Specifies the logdir")
+  if err := fs.Parse(os.Args[1:]); err != nil {
+    panic(err)
+  }
+
+  if logtostderr {
+    output = os.Stderr
+  } else {
+    var err error
+    if output, err = os.Open(os.DevNull); err != nil {
+      panic("Couldn't open /dev/null")
+    }
+  }
+
+  Current = NewLogger(logthreshold,
+                      FormatSequencer(FormatSeq{
+                        FmtLevel(false),
+                        FmtDate("2006-01-02 15:04:05.999999"),
+                        FmtString(" "),
+                        FmtFile(false),
+                        FmtString("#"),
+                        FmtFunc(),
+                        FmtString(":"),
+                        FmtLine(),
+                        FmtString(": "),
+                        FmtMsg()}),
+                      output)
+}
 
 func Fatalf(format string, a ...interface{}) {
   Current.Output(SeverityFatal, newLogMsgFormatted(format, a))

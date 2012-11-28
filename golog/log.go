@@ -44,8 +44,9 @@ func (self *defaultLogger) Output(s Severity, msg fmt.Stringer) {
   self.out.Write(final.Bytes())
 
   if s == SeverityFatal {
+    self.out.Write([]byte("Abort with backtrace for debugging purpose:\n"))
     self.out.Write(stack(false))
-    os.Exit(2)
+    os.Exit(255)
   }
 }
 

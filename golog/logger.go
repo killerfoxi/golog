@@ -113,16 +113,17 @@ var Current LogWritter = nil
 
 func init() {
   var logtostderr, logalsotostderr bool
-  var logdir string
+  var logdir, logfiletag string
   var logthreshold = SeverityInfo
 
   var output io.Writer
 
   fs := flag.NewFlagSet("golog", flag.ContinueOnError)
   fs.BoolVar(&logtostderr, "logtostderr", true, "Log to stderr")
-  fs.BoolVar(&logalsotostderr, "logalsotostderr", true, "Log also to stderr")
+  fs.BoolVar(&logalsotostderr, "logalsotostderr", false, "Log also to stderr")
   fs.Var(&logthreshold, "logthreshold", "The log threshold")
   fs.StringVar(&logdir, "logdir", ".", "Specifies the logdir")
+  fs.StringVar(&logfiletag, "logfiletag", "ALL", "Specifies the logfile tag")
   if err := fs.Parse(os.Args[1:]); err != nil {
     panic(err)
   }
@@ -130,9 +131,15 @@ func init() {
   if logtostderr {
     output = os.Stderr
   } else {
-    var err error
-    if output, err = os.Open(os.DevNull); err != nil {
-      panic("Couldn't open /dev/null")
+    filelog := NewIoFile(logdir, logfiletag)
+    if err := filelog.Setup(); err != nil {
+      panic(err)
+    }
+
+    if logalsotostderr {
+      output = io.MultiWriter(filelog, os.Stderr)
+    } else {
+      output = filelog
     }
   }
 

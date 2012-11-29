@@ -66,7 +66,7 @@ func multiplexerInit() {
   }
 }
 
-type ioFile struct {
+type logFile struct {
   logdir string
   tag string
 
@@ -74,15 +74,15 @@ type ioFile struct {
   fh *os.File
 }
 
-func NewIoFile(logdir string, tag string) *ioFile {
-  file := &ioFile{logdir: logdir, tag: tag}
+func NewLogFile(logdir string, tag string) *logFile {
+  file := &logFile{logdir: logdir, tag: tag}
   if err := file.Setup(); err != nil {
     panic(err)
   }
   return file
 }
 
-func (self *ioFile) Setup() (err error) {
+func (self *logFile) Setup() (err error) {
   if err = os.MkdirAll(self.logdir, 0700); err != nil {
     return
   }
@@ -96,6 +96,6 @@ func (self *ioFile) Setup() (err error) {
   return nil
 }
 
-func (self *ioFile) Write(p []byte) (int, error) {
+func (self *logFile) Write(p []byte) (int, error) {
   return self.fh.Write(p)
 }

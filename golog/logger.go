@@ -132,7 +132,7 @@ func init() {
     output = os.Stderr
   } else {
     multiplexerInit()
-    filelog := NewIoFile(logdir, logfiletag)
+    filelog := NewLogFile(logdir, logfiletag)
     if err := filelog.Setup(); err != nil {
       panic(err)
     }

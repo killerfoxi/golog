@@ -75,13 +75,14 @@ type Logger interface {
   Infof(string, ...interface{})
   Debug(...interface{})
   Debugf(string, ...interface{})
-}
-
-type LogWritter interface {
-  Output(Severity, fmt.Stringer)
+  output(Severity, fmt.Stringer)
 
   SetSeverity(Severity)
   GetSeverity() Severity
+}
+
+type LogDispatcher interface {
+  Dispatch(Severity, []byte) error
 }
 
 type logMsg struct {
@@ -109,38 +110,51 @@ func (self *logMsgFormatted) String() string {
   return fmt.Sprintf(self.format, self.args...)
 }
 
-var Current LogWritter = nil
+var Current Logger = nil
 
 func init() {
-  var logtostderr, logalsotostderr bool
+  var logtostderr, logalsotostderr, logtosingle bool
   var logdir, logfiletag string
   var logthreshold = SeverityInfo
 
-  var output io.Writer
+  var output LogDispatcher
 
   fs := flag.NewFlagSet("golog", flag.ContinueOnError)
   fs.BoolVar(&logtostderr, "logtostderr", true, "Log to stderr")
   fs.BoolVar(&logalsotostderr, "logalsotostderr", false, "Log also to stderr")
+  fs.BoolVar(&logtosingle, "logtosingle", false, "Log to single file")
   fs.Var(&logthreshold, "logthreshold", "The log threshold")
   fs.StringVar(&logdir, "logdir", ".", "Specifies the logdir")
-  fs.StringVar(&logfiletag, "logfiletag", "ALL", "Specifies the logfile tag")
+  fs.StringVar(&logfiletag, "logfiletag", "ALL", "Specifies the logfile tag (if single)")
   if err := fs.Parse(os.Args[1:]); err != nil {
     panic(err)
   }
 
   if logtostderr {
-    output = os.Stderr
+    output = NewDispatchedFile(os.Stderr)
   } else {
-    multiplexerInit()
-    filelog := NewLogFile(logdir, logfiletag)
-    if err := filelog.Setup(); err != nil {
-      panic(err)
-    }
+    dispatcherInit()
+    if logtosingle {
+      filelog := NewLogFile(logdir, logfiletag)
+      if err := filelog.Setup(); err != nil {
+        panic(err)
+      }
 
-    if logalsotostderr {
-      output = io.MultiWriter(filelog, os.Stderr)
+      if logalsotostderr {
+        output = NewDispatchedFile(io.MultiWriter(filelog, os.Stderr))
+      } else {
+        output = filelog
+      }
     } else {
-      output = filelog
+      var filelogs [severityMax]io.Writer
+      for s := SeverityFatal; s < severityMax; s++ {
+        filelogs[s] = NewLogFile(logdir, s.String())
+      }
+
+      if logalsotostderr {
+        filelogs[SeverityDebug] = io.MultiWriter(filelogs[SeverityDebug], os.Stderr)
+      }
+      output = NewIoMultiDispatcher(filelogs, true)
     }
   }
 
@@ -160,41 +174,41 @@ func init() {
 }
 
 func Fatalf(format string, a ...interface{}) {
-  Current.Output(SeverityFatal, newLogMsgFormatted(format, a))
+  Current.output(SeverityFatal, newLogMsgFormatted(format, a))
 }
 
 func Fatal(a ...interface{}) {
-  Current.Output(SeverityFatal, newLogMsg(a))
+  Current.output(SeverityFatal, newLogMsg(a))
 }
 
 func Errorf(format string, a ...interface{}) {
-  Current.Output(SeverityError, newLogMsgFormatted(format, a))
+  Current.output(SeverityError, newLogMsgFormatted(format, a))
 }
 
 func Error(a ...interface{}) {
-  Current.Output(SeverityError, newLogMsg(a))
+  Current.output(SeverityError, newLogMsg(a))
 }
 
 func Warningf(format string, a ...interface{}) {
-  Current.Output(SeverityWarning, newLogMsgFormatted(format, a))
+  Current.output(SeverityWarning, newLogMsgFormatted(format, a))
 }
 
 func Warning(a ...interface{}) {
-  Current.Output(SeverityWarning, newLogMsg(a))
+  Current.output(SeverityWarning, newLogMsg(a))
 }
 
 func Infof(format string, a ...interface{}) {
-  Current.Output(SeverityInfo, newLogMsgFormatted(format, a))
+  Current.output(SeverityInfo, newLogMsgFormatted(format, a))
 }
 
 func Info(a ...interface{}) {
-  Current.Output(SeverityInfo, newLogMsg(a))
+  Current.output(SeverityInfo, newLogMsg(a))
 }
 
 func Debugf(format string, a ...interface{}) {
-  Current.Output(SeverityDebug, newLogMsgFormatted(format, a))
+  Current.output(SeverityDebug, newLogMsgFormatted(format, a))
 }
 
 func Debug(a ...interface{}) {
-  Current.Output(SeverityDebug, newLogMsg(a))
+  Current.output(SeverityDebug, newLogMsg(a))
 }

@@ -9,55 +9,60 @@ import (
   "strings"
   "time"
   "path"
+  "errors"
 )
 
-type ioMultiplexer struct {
-  parent LogWritter
+type dispatchedFile struct {
+  fh io.Writer
+}
+
+func NewDispatchedFile(fh io.Writer) *dispatchedFile {
+  return &dispatchedFile{fh: fh}
+}
+
+func (self *dispatchedFile) Dispatch(_ Severity, data []byte) error {
+  _, err := self.fh.Write(data)
+  return err
+}
+
+type ioMultiDispatcher struct {
   out [severityMax]io.Writer
   pushed_upwards bool
 }
 
-func NewIoMultiplexer(parent LogWritter, out [severityMax]io.Writer, pushed_upwards bool) *ioMultiplexer {
-  return &ioMultiplexer{parent: parent, out: out, pushed_upwards: pushed_upwards}
+func NewIoMultiDispatcher(out [severityMax]io.Writer, pushed_upwards bool) *ioMultiDispatcher {
+  return &ioMultiDispatcher{out: out, pushed_upwards: pushed_upwards}
 }
 
-func (self *ioMultiplexer) Output(s Severity, msg fmt.Stringer) {
+func (self *ioMultiDispatcher) Dispatch(s Severity, data []byte) error {
   if s >= severityMax {
-    return
+    return errors.New("Unknown severity")
   }
 
-  var log []byte
-  if s != SeverityFatal {
-    log = []byte(msg.String())
-  } else {
+  if s == SeverityFatal {
     // Write all stack traces
-    bf := bytes.NewBufferString(msg.String())
+    bf := bytes.NewBuffer(data)
     bf.Write(stack(true))
-    log = bf.Bytes()
+    data = bf.Bytes()
   }
 
   for i := s; i < severityMax; i++ {
-    self.out[i].Write(log)
+    if _, err := self.out[i].Write(data); err != nil {
+      return err
+    }
 
     if !self.pushed_upwards {
       break
     }
   }
-}
-
-func (self *ioMultiplexer) SetSeverity(s Severity) {
-  self.parent.SetSeverity(s)
-}
-
-func (self *ioMultiplexer) GetSeverity() Severity {
-  return self.parent.GetSeverity()
+  return nil
 }
 
 var hostname = "???"
 var username = "???"
 var pid = os.Getpid()
 
-func multiplexerInit() {
+func dispatcherInit() {
   if hn, err := os.Hostname(); err == nil {
     hostname = strings.SplitN(hn, ".", 2)[0]
   }
@@ -70,12 +75,14 @@ type logFile struct {
   logdir string
   tag string
 
-  // Calculated
   fh *os.File
 }
 
 func NewLogFile(logdir string, tag string) *logFile {
-  file := &logFile{logdir: logdir, tag: tag}
+  //file := &logFile{logdir: logdir, tag: tag}
+  file := new(logFile)
+  file.logdir = logdir
+  file.tag = tag
   if err := file.Setup(); err != nil {
     panic(err)
   }
@@ -98,4 +105,9 @@ func (self *logFile) Setup() (err error) {
 
 func (self *logFile) Write(p []byte) (int, error) {
   return self.fh.Write(p)
+}
+
+func (self *logFile) Dispatch(_ Severity, data []byte) error {
+  _, err := self.fh.Write(data)
+  return err
 }

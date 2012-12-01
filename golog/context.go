@@ -60,4 +60,3 @@ func (self *runtimeContext) Fn() string {
 func (self *runtimeContext) CallerTime() time.Time {
   return self.caller_time
 }
-

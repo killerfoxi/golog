@@ -66,7 +66,7 @@ var hostname = "???"
 var username = "???"
 var pid = os.Getpid()
 
-func dispatcherInit() {
+func init() {
   if hn, err := os.Hostname(); err == nil {
     hostname = strings.SplitN(hn, ".", 2)[0]
   }

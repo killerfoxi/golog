@@ -4,10 +4,8 @@ import (
   "fmt"
   "os"
   "runtime"
-  "flag"
   "errors"
   "strings"
-  "io"
 )
 
 type Severity uint8
@@ -112,52 +110,7 @@ func (self *logMsgFormatted) String() string {
 var Current Logger = nil
 
 func init() {
-  var logtostderr, logalsotostderr, logtosingle bool
-  var logdir, logfiletag string
-  var logthreshold = SeverityInfo
-
-  var output LogDispatcher
-
-  fs := flag.NewFlagSet("golog", flag.ContinueOnError)
-  fs.BoolVar(&logtostderr, "logtostderr", true, "Log to stderr")
-  fs.BoolVar(&logalsotostderr, "logalsotostderr", false, "Log also to stderr")
-  fs.BoolVar(&logtosingle, "logtosingle", false, "Log to single file")
-  fs.Var(&logthreshold, "logthreshold", "The log threshold")
-  fs.StringVar(&logdir, "logdir", ".", "Specifies the logdir")
-  fs.StringVar(&logfiletag, "logfiletag", "ALL", "Specifies the logfile tag (if single)")
-  if err := fs.Parse(os.Args[1:]); err != nil {
-    panic(err)
-  }
-
-  if logtostderr {
-    output = NewDispatchedFile(os.Stderr)
-  } else {
-    dispatcherInit()
-    if logtosingle {
-      filelog := NewLogFile(logdir, logfiletag)
-      if err := filelog.Setup(); err != nil {
-        panic(err)
-      }
-
-      if logalsotostderr {
-        output = NewDispatchedFile(io.MultiWriter(filelog, os.Stderr))
-      } else {
-        output = filelog
-      }
-    } else {
-      var filelogs [severityMax]io.Writer
-      for s := SeverityFatal; s < severityMax; s++ {
-        filelogs[s] = NewLogFile(logdir, s.String())
-      }
-
-      if logalsotostderr {
-        filelogs[SeverityDebug] = io.MultiWriter(filelogs[SeverityDebug], os.Stderr)
-      }
-      output = NewIoMultiDispatcher(filelogs, true)
-    }
-  }
-
-  Current = NewLogger(logthreshold,
+  Current = NewLogger(SeverityInfo,
                       FormatSequencer(FormatSeq{
                         FmtLevel(false),
                         FmtDate("2006-01-02 15:04:05.999999"),
@@ -169,7 +122,7 @@ func init() {
                         FmtLine(),
                         FmtString(": "),
                         FmtMsg()}),
-                      output)
+                      NewDispatchedFile(os.Stderr))
 }
 
 func Fatalf(format string, a ...interface{}) {

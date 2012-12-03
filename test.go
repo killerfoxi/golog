@@ -11,6 +11,7 @@ func foo() {
 }
 
 func main() {
+  golog.Setup(golog.FlagConfig)
   golog.Debug("Test debug log")
   golog.Info("Test info log")
   golog.Warning("Test warning log")

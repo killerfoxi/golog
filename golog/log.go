@@ -27,6 +27,14 @@ func (self *defaultLogger) GetSeverity() Severity {
   return self.severity
 }
 
+func (self *defaultLogger) SetDispatcher(d LogDispatcher) {
+  self.out = d
+}
+
+func (self *defaultLogger) GetDispatcher() LogDispatcher {
+  return self.out
+}
+
 func (self *defaultLogger) output(s Severity, msg fmt.Stringer) {
   if s > self.severity {
     return

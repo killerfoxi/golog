@@ -79,10 +79,9 @@ type Logger interface {
 
   SetSeverity(Severity)
   GetSeverity() Severity
-}
 
-type LogDispatcher interface {
-  Dispatch(Severity, []byte) error
+  SetDispatcher(dispatcher LogDispatcher)
+  GetDispatcher() LogDispatcher
 }
 
 type logMsg struct {

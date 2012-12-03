@@ -12,6 +12,10 @@ import (
   "errors"
 )
 
+type LogDispatcher interface {
+  Dispatch(Severity, []byte) error
+}
+
 type dispatchedFile struct {
   fh io.Writer
 }

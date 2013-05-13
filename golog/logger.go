@@ -164,3 +164,9 @@ func Debugf(format string, a ...interface{}) {
 func Debug(a ...interface{}) {
   Current.output(SeverityDebug, newLogMsg(a))
 }
+
+func WhenDebug(fn func() string) {
+  if Current.GetSeverity() >= SeverityDebug {
+    Current.output(SeverityDebug, newLogMsg([]interface{}{fn()}))
+  }
+}
